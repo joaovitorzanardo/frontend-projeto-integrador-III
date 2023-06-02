@@ -13,31 +13,25 @@ import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
 import { TablePagination } from '@mui/material';
 
-import { Api } from '../services/api/ApiConfig';
+import { Api } from '../../shared/services/api/ApiConfig';
 
-const columns = ['id', 'Nome', 'CPF', 'Telefone', 'UF', 'Cidade', 'CEP', 'Rua', 'Bairro', 'Número']
+const columns = ['id', 'Tipo Produto', 'Cpf Cliente', 'Nome Cliente']
 
-type Cliente = {
-  clientId: string,
-  cpf: string,
-  first_name: string,
-  last_name: string,
-  phone_number: string
-  address: Endereco
+type Produto = {
+  productId: string
+  client: {
+    first_name: string
+    last_name: string
+    cpf: string
+  } 
+  productType: {
+    description: string
+  }
 }
 
-type Endereco = {
-  uf: string,
-  city: string,
-  cep: string,
-  street: string,
-  district: string, 
-  number: string
-}
+export const ProdutoTable = () => {
 
-export const CustomTable = () => {
-
-  const [clientes, setClientes] = useState<Cliente[]>([]);
+  const [produtos, setProdutos] = useState<Produto[]>([]);
 
   const [page, setPage] = useState(0)
 
@@ -52,20 +46,22 @@ export const CustomTable = () => {
   }
 
   useEffect(() => {
-    Api.get('/client').then(function (response) {
-      const cli: Cliente[] = []
-      response.data.forEach((c: Cliente) => {
-        cli.push({
-          clientId: c.clientId,
-          cpf: c.cpf,
-          first_name: c.first_name,
-          last_name: c.last_name,
-          phone_number: c.phone_number,
-          address: c.address
+    Api.get('/product').then(function (response) {
+      const prod: Produto[] = []
+      response.data.forEach((p: Produto) => {
+        prod.push({
+          productId: p.productId,
+          client: {
+            first_name: p.client.first_name,
+            last_name: p.client.last_name,
+            cpf: p.client.cpf
+          },
+          productType: {
+            description: p.productType.description  
+          }
         })
       })
-      setClientes(cli);
-      console.log(cli)
+      setProdutos(prod);
     }).catch(function (err) {
       console.log(err)
     });
@@ -86,19 +82,13 @@ export const CustomTable = () => {
           </TableHead>
           <TableBody>
               {
-                clientes.map((data: Cliente) => {
+                produtos.map((data: Produto) => {
                   return (
                     <TableRow>
-                      <TableCell>{data.clientId}</TableCell>
-                      <TableCell>{`${data.first_name} ${data.last_name}`}</TableCell>
-                      <TableCell>{data.cpf}</TableCell>
-                      <TableCell>{data.phone_number}</TableCell>
-                      <TableCell>{data.address.uf}</TableCell>
-                      <TableCell>{data.address.city}</TableCell>
-                      <TableCell>{data.address.cep}</TableCell>
-                      <TableCell>{data.address.street}</TableCell>
-                      <TableCell>{data.address.district}</TableCell>
-                      <TableCell>{data.address.number}</TableCell>
+                      <TableCell>{data.productId}</TableCell>
+                      <TableCell>{data.productType.description}</TableCell>
+                      <TableCell>{data.client.cpf}</TableCell>
+                      <TableCell>{`${data.client.first_name} ${data.client.last_name}`}</TableCell>
                     </TableRow>
                   )
                 })
@@ -109,7 +99,7 @@ export const CustomTable = () => {
       <TablePagination 
         rowsPerPageOptions={[5, 10, 25]}
         page={page} 
-        count={2} 
+        count={1} 
         rowsPerPage={rowsPerPage} 
         onPageChange={handlePageChange}
         onRowsPerPageChange={handleChangeRowsPerPage}
