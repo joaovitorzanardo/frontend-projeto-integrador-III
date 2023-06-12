@@ -21,7 +21,7 @@ import CreateIcon from '@mui/icons-material/Create';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { TipoTarefaDialog } from './TipoTarefaDialog';
 
-const columns = ['id', 'Descrição', 'Excluir', 'Editar']
+const columns = ['id', 'Descrição', 'Editar', 'Excluir']
 
 type TipoTarefa = {
   taskTypeId: string  
@@ -106,12 +106,12 @@ export const TipoTarefaTable = ({openDialog}: Props) => {
                       <TableCell>{data.description}</TableCell>                      
                       <TableCell>
                         <IconButton>
-                          <DeleteIcon onClick={() => handleDelete(data.taskTypeId)}/>
+                          <CreateIcon onClick={() => handleOpen(data.taskTypeId)}/>
                         </IconButton>
                       </TableCell>
                       <TableCell>
                         <IconButton>
-                          <CreateIcon onClick={() => handleOpen(data.taskTypeId)}/>
+                          <DeleteIcon onClick={() => handleDelete(data.taskTypeId)}/>
                         </IconButton>
                       </TableCell>
                     </TableRow>

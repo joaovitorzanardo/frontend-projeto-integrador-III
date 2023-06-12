@@ -16,8 +16,10 @@ import { TablePagination } from '@mui/material';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 
 import { Api } from '../../shared/services/api/ApiConfig';
+import { TarefaDialog } from './TarefaDialog';
+import dayjs, { Dayjs } from 'dayjs';
 
-const columns = ['id', 'Nome Cliente', 'Cpf Cliente', 'Data Entrega', 'Status', 'Detalhes']
+const columns = ['id', 'Nome Cliente', 'Cpf Cliente', 'Data Entrega', 'Status', 'Preço' ,'Detalhes']
 
 type Tarefa = {
   taskId: string
@@ -26,21 +28,51 @@ type Tarefa = {
     last_name: string
     cpf: string
   } 
-  deadline: string
+  deadline: Dayjs
   taskType: {
     description: string
   }
+  taskStatus: string
   description: string
   price: string
 }
 
-export const TarefaTable = () => {
+const status: Status[] = [
+  {statusId: 1, descricao: 'Não Iniciado'}, 
+  {statusId: 2, descricao: 'Executando'}, 
+  {statusId: 3, descricao: 'Aguardando Retirada'}, 
+  {statusId: 4, descricao: 'Finalizado'}, 
+  {statusId: 5, descricao: 'Cancelado'}
+]
+
+type Status = {
+  statusId: number
+  descricao: string
+}
+
+type Props = {
+  openDialog: boolean
+  search: Tarefa
+}
+
+export const TarefaTable = ({ openDialog, search }: Props) => {
+
+  const [editRow, setEditRow] = useState('')
+  const [open, setOpen] = useState(false);
 
   const [tarefas, setTarefas] = useState<Tarefa[]>([]);
 
   const [page, setPage] = useState(0)
 
   const [rowsPerPage, setRowsPerPage] = useState(5)
+
+  const formatarCpf = (cpf: string) => {
+    const parte1 = cpf.substring(0, 3);
+    const parte2 = cpf.substring(3, 6);
+    const parte3 = cpf.substring(6, 9);
+    const parte4 = cpf.substring(9, 11);
+    return `${parte1}.${parte2}.${parte3}-${parte4}`
+  }
 
   const handlePageChange = (event: unknown, newPage: number) => {
     setPage(newPage);
@@ -63,10 +95,11 @@ export const TarefaTable = () => {
             last_name: t.client.last_name,
             cpf: t.client.cpf
           }, 
-          deadline: new Date(t.deadline).toDateString(),
+          deadline: dayjs(t.deadline),
           taskType: {
             description: t.taskType ? t.taskType.description : ''
           },
+          taskStatus: t.taskStatus,
           description: t.description,
           price: t.price
         })
@@ -75,7 +108,20 @@ export const TarefaTable = () => {
     }).catch(function (err) {
       console.log(err)
     });
-  }, []);
+  }, [openDialog, open]);
+
+  const handleClose = () => {
+    setOpen(false);
+  }
+
+  const handleOpen = (productId: string) =>  {
+    setEditRow(productId)
+    setOpen(true);
+  }
+
+  useEffect(() => {
+    setTarefas([search])
+  }, [search])
 
   return (
     <Paper>
@@ -93,16 +139,18 @@ export const TarefaTable = () => {
           <TableBody>
               {
                 tarefas.map((data: Tarefa) => {
+                  const stat: Status | undefined = status.find(e => e.statusId.toString() == data.taskStatus) 
                   return (
                     <TableRow>
                       <TableCell>{data.taskId}</TableCell>
                       <TableCell>{`${data.client.first_name} ${data.client.last_name}`}</TableCell>
-                      <TableCell>{data.client.cpf}</TableCell>
-                      <TableCell>{data.deadline}</TableCell>
-                      <TableCell></TableCell>
+                      <TableCell>{formatarCpf(data.client.cpf)}</TableCell>
+                      <TableCell>{data.deadline.format('DD/MM/YYYY')}</TableCell>
+                      <TableCell>{stat !== undefined ? stat.descricao : 'Não Iniciado'}</TableCell>
+                      <TableCell>{data.price}</TableCell>
                       <TableCell>
                         <IconButton>
-                          <MoreHorizIcon fontSize='small'/>
+                          <MoreHorizIcon fontSize='small' onClick={() => handleOpen(data.taskId)}/>
                         </IconButton>
                       </TableCell>
                     </TableRow>
@@ -120,6 +168,8 @@ export const TarefaTable = () => {
         onPageChange={handlePageChange}
         onRowsPerPageChange={handleChangeRowsPerPage}
         />
+      <TarefaDialog open={open} onClose={handleClose}
+        rowId={editRow}/>
     </Paper>
   )
 }

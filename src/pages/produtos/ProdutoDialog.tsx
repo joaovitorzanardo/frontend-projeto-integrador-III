@@ -5,17 +5,18 @@ import { ProdutoForm } from './ProdutoForm'
 
 type Props = {
     open: boolean,
-    onClose: () => void
+    onClose: () => void,
+    rowId: string
 }
 
-export const ProdutoDialog = ({open, onClose }: Props) => {
+export const ProdutoDialog = ({open, onClose, rowId }: Props) => {
 
   return (
     <Dialog open={open} onClose={onClose}>
         <DialogTitle>Cadastro Produto</DialogTitle>
         <Divider />
         <DialogContent>
-          <ProdutoForm onClose={onClose} />
+          <ProdutoForm onClose={onClose} rowId={rowId}/>
         </DialogContent>
     </Dialog>
   )

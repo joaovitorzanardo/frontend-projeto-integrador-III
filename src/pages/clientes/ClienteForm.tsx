@@ -7,7 +7,7 @@ import {
     Grid
 } from '@mui/material'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 import { Form } from '../../shared/components/Form'
 
@@ -48,9 +48,10 @@ const initialValues = {
 
 type Props = {
     onClose: () => void
+    rowId: string
 }
 
-export const ClienteForm = ({onClose}: Props) => {
+export const ClienteForm = ({onClose, rowId}: Props) => {
 
     const validate = (fieldValues = values) => {
         let temp = {
@@ -112,28 +113,75 @@ export const ClienteForm = ({onClose}: Props) => {
 
    const handleSubmit = async () => {
         if (validate()) {
-            try{
-                const reponse = await Api.post('/client', {
-                    firstName: values.nome,
-                    lastName: values.sobrenome,
-                    cpf: values.cpf,
-                    phoneNumber: values.telefone,
-                    address: {
-                        uf: values.endereco.uf,
-                        city: values.endereco.cidade,
-                        cep: values.endereco.cep,
-                        street: values.endereco.rua,
-                        district: values.endereco.bairro,
-                        number: values.endereco.numero,
-                        reference: values.endereco.complemento
+            if (rowId === '') {
+                try{
+                    const reponse = await Api.post('/client', {
+                        firstName: values.nome,
+                        lastName: values.sobrenome,
+                        cpf: values.cpf,
+                        phoneNumber: values.telefone,
+                        address: {
+                            uf: values.endereco.uf,
+                            city: values.endereco.cidade,
+                            cep: values.endereco.cep,
+                            street: values.endereco.rua,
+                            district: values.endereco.bairro,
+                            number: values.endereco.numero,
+                            reference: values.endereco.complemento
+                        }
+                    }) } catch (err) {
+                        console.log(err)
                     }
-                })
-            } catch (err) {
-                console.log(err)
+                    onClose();
+            } else {
+                try{
+                    const reponse = await Api.put(`/client?clientId=${rowId}`, {
+                        firstName: values.nome,
+                        lastName: values.sobrenome,
+                        cpf: values.cpf,
+                        phoneNumber: values.telefone,
+                        address: {
+                            uf: values.endereco.uf,
+                            city: values.endereco.cidade,
+                            cep: values.endereco.cep,
+                            street: values.endereco.rua,
+                            district: values.endereco.bairro,
+                            number: values.endereco.numero,
+                            reference: values.endereco.complemento
+                        }
+                    }) } catch (err) {
+                        console.log(err)
+                    }
+                    onClose();
             }
         } 
-        console.log(errors)
    }
+
+   useEffect(() => {
+    if (rowId !== '') {
+        Api.get(`/client?clientId=${rowId}`).then(function (response) {
+            console.log(response.data)
+            setValues({
+                nome: response.data.first_name,
+                sobrenome: response.data.last_name,
+                cpf: response.data.cpf,
+                telefone: response.data.phone_number,
+                endereco: {
+                    uf: response.data.address.uf,
+                    cidade: response.data.address.city,
+                    cep: response.data.address.cep,
+                    rua: response.data.address.street,
+                    bairro: response.data.address.district,
+                    numero: response.data.address.number,
+                    complemento: response.data.address.reference
+                }
+            })
+        }).catch(err => {
+            console.log(err)
+        }) 
+    }
+    
+   }, [])
 
   return (
     <Form>

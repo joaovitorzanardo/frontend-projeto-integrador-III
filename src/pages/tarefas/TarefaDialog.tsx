@@ -6,16 +6,17 @@ import { TarefaForm } from './TarefaForm'
 type Props = {
     open: boolean,
     onClose: () => void
+    rowId: string
 }
 
-export const TarefaDialog = ({open, onClose }: Props) => {
+export const TarefaDialog = ({ open, onClose, rowId }: Props) => {
 
   return (
     <Dialog open={open} onClose={onClose}>
         <DialogTitle>Cadastro Tarefa</DialogTitle>
         <Divider />
         <DialogContent>
-          <TarefaForm onClose={onClose} />
+          <TarefaForm onClose={onClose} rowId={rowId}/>
         </DialogContent>
     </Dialog>
   )

@@ -1,6 +1,6 @@
 import React from 'react'
 
-import { Box } from '@mui/material'
+import { Box, IconButton } from '@mui/material'
 
 import { useState, useEffect } from 'react';
 
@@ -15,7 +15,11 @@ import { TablePagination } from '@mui/material';
 
 import { Api } from '../../shared/services/api/ApiConfig';
 
-const columns = ['id', 'Tipo Produto', 'Cpf Cliente', 'Nome Cliente']
+import CreateIcon from '@mui/icons-material/Create';
+import DeleteIcon from '@mui/icons-material/Delete';
+import { ProdutoDialog } from './ProdutoDialog';
+
+const columns = ['id', 'Tipo Produto', 'Cpf Cliente', 'Nome Cliente', 'Editar', 'Excluir']
 
 type Produto = {
   productId: string
@@ -29,9 +33,16 @@ type Produto = {
   }
 }
 
-export const ProdutoTable = () => {
+type Props = {
+  openDialog: boolean
+}
+
+export const ProdutoTable = ({openDialog}: Props) => {
 
   const [produtos, setProdutos] = useState<Produto[]>([]);
+
+  const [editRow, setEditRow] = useState('')
+  const [open, setOpen] = useState(false);
 
   const [page, setPage] = useState(0)
 
@@ -43,6 +54,10 @@ export const ProdutoTable = () => {
 
   const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
     setRowsPerPage(+event.target.value)
+  }
+
+  const handleClose = () => {
+    setOpen(false);
   }
 
   useEffect(() => {
@@ -65,7 +80,28 @@ export const ProdutoTable = () => {
     }).catch(function (err) {
       console.log(err)
     });
-  }, []);
+  }, [openDialog, open]);
+
+  const handleOpen = (productId: string) =>  {
+    setEditRow(productId)
+    setOpen(true);
+  }
+
+  const handleDelete = async (productId: string) => {
+    try {
+      await Api.delete(`/product?productId=${productId}`)
+    } catch (err) {
+      console.log(err)
+    }
+  }
+
+  const formatarCpf = (cpf: string) => {
+    const parte1 = cpf.substring(0, 3);
+    const parte2 = cpf.substring(3, 6);
+    const parte3 = cpf.substring(6, 9);
+    const parte4 = cpf.substring(9, 11);
+    return `${parte1}.${parte2}.${parte3}-${parte4}`
+  }
 
   return (
     <Paper>
@@ -87,8 +123,18 @@ export const ProdutoTable = () => {
                     <TableRow>
                       <TableCell>{data.productId}</TableCell>
                       <TableCell>{data.productType.description}</TableCell>
-                      <TableCell>{data.client.cpf}</TableCell>
+                      <TableCell>{formatarCpf(data.client.cpf)}</TableCell>
                       <TableCell>{`${data.client.first_name} ${data.client.last_name}`}</TableCell>
+                      <TableCell>
+                        <IconButton>
+                          <CreateIcon onClick={() => handleOpen(data.productId)}/>
+                        </IconButton>
+                      </TableCell>
+                      <TableCell>
+                        <IconButton>
+                          <DeleteIcon onClick={() => handleDelete(data.productId)}/>
+                        </IconButton>
+                      </TableCell>
                     </TableRow>
                   )
                 })
@@ -104,6 +150,8 @@ export const ProdutoTable = () => {
         onPageChange={handlePageChange}
         onRowsPerPageChange={handleChangeRowsPerPage}
         />
+      <ProdutoDialog open={open} onClose={handleClose}
+        rowId={editRow}/>
     </Paper>
   )
 }

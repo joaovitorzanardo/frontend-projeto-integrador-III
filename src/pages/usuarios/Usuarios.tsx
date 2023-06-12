@@ -33,20 +33,6 @@ export const Usuarios = () => {
         >
             Criar
         </Button>
-        <Button 
-            variant='contained' 
-            sx={{bgcolor: '#3700B3', mr: '15px'}}
-            startIcon={<CreateIcon />}
-        >
-            Editar 
-        </Button>
-        <Button 
-            variant='contained' 
-            sx={{bgcolor: '#3700B3'}}
-            endIcon={<DeleteIcon />}
-        >
-            Excluir
-        </Button>
       </Box>
     </Template>
   )

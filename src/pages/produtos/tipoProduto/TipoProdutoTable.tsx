@@ -19,7 +19,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import { Api } from '../../../shared/services/api/ApiConfig';
 import { TipoProdutoDialog } from './TipoProdutoDialog';
 
-const columns = ['id', 'Descrição', 'Excluir', 'Editar']
+const columns = ['id', 'Descrição', 'Editar', 'Excluir']
 
 type TipoProduto = {
   productTypeId: string  
@@ -104,12 +104,12 @@ export const TipoProdutoTable = ({openDialog}: Props) => {
                       <TableCell>{data.description}</TableCell>
                       <TableCell>
                         <IconButton>
-                          <DeleteIcon onClick={() => handleDelete(data.productTypeId)}/>
+                          <CreateIcon onClick={() => handleOpen(data.productTypeId)}/>
                         </IconButton>
                       </TableCell>
                       <TableCell>
                         <IconButton>
-                          <CreateIcon onClick={() => handleOpen(data.productTypeId)}/>
+                          <DeleteIcon onClick={() => handleDelete(data.productTypeId)}/>
                         </IconButton>
                       </TableCell>
                     </TableRow>

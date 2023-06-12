@@ -28,6 +28,7 @@ const initialValues = {
 
 type Props = {
     onClose: () => void
+    rowId: string
 }
 
 type Cliente = {
@@ -41,7 +42,7 @@ type TipoProduto = {
     description: string
 }
 
-export const ProdutoForm = ({onClose}: Props) => {
+export const ProdutoForm = ({onClose, rowId}: Props) => {
 
   const [clientes, setClientes] = useState<Cliente[]>([]);  
   const [selectedClient, setSelectedClient] = useState('')
@@ -84,6 +85,18 @@ export const ProdutoForm = ({onClose}: Props) => {
     })
   }, [])
 
+  useEffect(() => {
+    if (rowId !== '') {
+        Api.get(`/product?productId=${rowId}`).then(function (response) {
+            setSelectedProductType(response.data.productType.productTypeId)
+            setSelectedClient(response.data.client.clientId)
+        }).catch(err => {
+            console.log(err)
+        }) 
+    }
+    
+   }, [])
+
   const handleOnChangeClient = (e: SelectChangeEvent) => {
     setSelectedClient(e.target.value)
   }
@@ -93,7 +106,8 @@ export const ProdutoForm = ({onClose}: Props) => {
   }
 
    const handleSubmit = async () => {
-        try {
+    if (rowId === '') {
+        try{
             const reponse = await Api.post('/product', {
                 clientId: selectedClient,
                 productTypeId: selectedProdutctType 
@@ -101,6 +115,18 @@ export const ProdutoForm = ({onClose}: Props) => {
         } catch (err) {
             console.log(err)
         }
+        onClose();
+    } else {
+        try{
+            const reponse = await Api.put(`/product?productId=${rowId}`, {
+                clientId: selectedClient,
+                productTypeId: selectedProdutctType 
+            })
+        } catch (err) {
+            console.log(err)
+        }
+        onClose();
+    }    
    }
 
   return (

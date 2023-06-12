@@ -13,8 +13,6 @@ import {
     TextField
 } from '@mui/material'
 
-import AddIcon from '@mui/icons-material/Add';
-
 import { useState, useEffect } from 'react'
 
 import { Form } from '../../shared/components/Form'
@@ -40,6 +38,7 @@ const initialValues = {
 
 type Props = {
     onClose: () => void
+    rowId: string
 }
 
 type Cliente = {
@@ -74,14 +73,14 @@ const status = [
     {statusId: 5, descricao: 'Cancelado'}
 ]
 
-export const TarefaForm = ({onClose}: Props) => {
+export const TarefaForm = ({ onClose, rowId }: Props) => {
 
   const [clientes, setClientes] = useState<Cliente[]>([]);  
   const [tipoTarefas, setTipoTarefas] = useState<TipoTarefa[]>([])
   const [produtos, setProdutos] = useState<Produto[]>([])
 
   const [selectedClient, setSelectedClient] = useState('')
-  const [selectedProdutctType, setSelectedProductType] = useState('')
+  const [selectedTaskType, setSelectedTaskType] = useState('')
   const [selectedProduct, setSelectedProduct] = useState('')
   const [taskDescription, setTaskDescription] = useState('')
   const [deadline, setDeadLine] = useState<Dayjs | null>(dayjs())
@@ -93,7 +92,6 @@ export const TarefaForm = ({onClose}: Props) => {
   useEffect(() => {
     let cli: Cliente[] = []
     Api.get('/client').then((response) => {
-        console.log(response.data)
         response.data.forEach((c: Cliente) => {
             cli.push({
                 clientId: c.clientId,
@@ -124,29 +122,48 @@ export const TarefaForm = ({onClose}: Props) => {
   }, [])
 
   useEffect(() => {
-    Api.get('/product').then((response) => {
-        const prod: Produto[] = []
-        response.data.forEach((p: Produto) => {
-            prod.push({
-                productId: p.productId,
-                productType: {
-                    productTypeId: p.productType.productTypeId,
-                    description: p.productType.description
-                }
+    if (selectedClient !== '') {
+        Api.get(`/product?clientId=${selectedClient}`).then((response) => {
+            const prod: Produto[] = []
+            response.data.forEach((p: Produto) => {
+                prod.push({
+                    productId: p.productId,
+                    productType: {
+                        productTypeId: p.productType.productTypeId,
+                        description: p.productType.description
+                    }
+                })
             })
+            setProdutos(prod)
+        }).catch((err) => {
+            console.log(err)
         })
-        setProdutos(prod)
-    }).catch((err) => {
-        console.log(err)
-    }) 
-  }, [])
+    } else {
+        Api.get(`/product`).then((response) => {
+            const prod: Produto[] = []
+            response.data.forEach((p: Produto) => {
+                prod.push({
+                    productId: p.productId,
+                    productType: {
+                        productTypeId: p.productType.productTypeId,
+                        description: p.productType.description
+                    }
+                })
+            })
+            setProdutos(prod)
+        }).catch((err) => {
+            console.log(err)
+        })
+    }
+     
+  }, [selectedClient])
 
   const handleOnChangeClient = (e: SelectChangeEvent) => {
     setSelectedClient(e.target.value)
   }
 
-  const handleOnChangeProductType = (e: SelectChangeEvent) => {
-    setSelectedProductType(e.target.value)
+  const handleOnChangeTaskType = (e: SelectChangeEvent) => {
+    setSelectedTaskType(e.target.value)
   }
 
   const handleOnChangeProduct = (e: SelectChangeEvent) => {
@@ -167,21 +184,56 @@ export const TarefaForm = ({onClose}: Props) => {
 
    const handleSubmit = async () => {
         if (deadline != null) {
-            try {
-                const reponse = await Api.post('/task', {
-                    clientId: selectedClient,
-                    deadline: `${deadline.day()}/${deadline.month()}/${deadline.year()}`,
-                    taskTypeId: selectedProdutctType,
-                    productId: selectedProduct,
-                    status: stat,
-                    description: taskDescription,
-                    price: price 
-                })
-            } catch (err) {
-                console.log(err)
+            if (rowId === '') {
+                try {
+                    const reponse = await Api.post('/task', {
+                        clientId: selectedClient,
+                        deadline: deadline.format('DD/MM/YYYY'),
+                        taskTypeId: selectedTaskType,
+                        productId: selectedProduct,
+                        status: stat,
+                        description: taskDescription,
+                        price: price 
+                    })
+                } catch (err) {
+                    console.log(err)
+                }
+            } else {
+                try {
+                    const reponse = await Api.put(`/task?taskId=${rowId}`, {
+                        clientId: selectedClient,
+                        deadline: deadline.format('DD/MM/YYYY'),
+                        taskTypeId: selectedTaskType,
+                        productId: selectedProduct,
+                        status: stat,
+                        description: taskDescription,
+                        price: price 
+                    })
+                } catch (err) {
+                    console.log(err)
+                }
             }
-        } 
+        }   
+             
+        onClose()
    }
+
+   useEffect(() => {
+    if (rowId !== '') {
+        Api.get(`/task?taskId=${rowId}`).then(function (response) {
+            setSelectedClient(response.data.client.clientId)
+            setSelectedProduct(response.data.product.productId)
+            setStat(response.data.taskStatus)
+            setDeadLine(dayjs(response.data.deadline))
+            setSelectedTaskType(response.data.taskType.taskTypeId)
+            setTaskDescription(response.data.description)
+            setPrice(response.data.price)
+        }).catch(err => {
+            console.log(err)
+        }) 
+    }
+    
+   }, [])
 
   return (
     <Form>
@@ -217,9 +269,9 @@ export const TarefaForm = ({onClose}: Props) => {
                     <InputLabel id='tipo-tarefa-id'>Tipo Tarefa</InputLabel>
                     <Select 
                         labelId='tipo-tarefa-id'
-                        value={selectedProdutctType}
+                        value={selectedTaskType}
                         label='Tipo Tarefa'
-                        onChange={handleOnChangeProductType}
+                        onChange={handleOnChangeTaskType}
                         
                     >
                     {
@@ -242,7 +294,7 @@ export const TarefaForm = ({onClose}: Props) => {
                     >
                     {
                         produtos.map((p: Produto) => {
-                            return <MenuItem value={p.productId}>{`${p.productType.description} ${p.productId}`}</MenuItem>        
+                            return <MenuItem value={p.productId}>{`${p.productType.description}`}</MenuItem>        
                         })
                     }
                     </Select>
